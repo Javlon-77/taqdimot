@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Planet Earth | Interactive Globe Showcase</title>
+    <title>3D Google Earth Style Showcase</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Ikonkalari -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Three.js va OrbitControls -->
+    
+    <!-- Three.js & OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #020208;
+            background-color: #000511;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
         }
-        #canvas-container {
+        #webgl-container {
             width: 100vw;
             height: 100vh;
             position: absolute;
@@ -28,7 +30,7 @@
             left: 0;
             z-index: 1;
         }
-        .ui-container {
+        .ui-layer {
             position: relative;
             z-index: 10;
             pointer-events: none;
@@ -36,75 +38,74 @@
         .interactive {
             pointer-events: auto;
         }
-        .glass-card {
-            background: rgba(10, 15, 30, 0.55);
+        .glass-panel {
+            background: rgba(8, 15, 30, 0.65);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 240, 255, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
         }
-        .glow-title {
-            text-shadow: 0 0 20px rgba(0, 240, 255, 0.8), 0 0 40px rgba(59, 130, 246, 0.5);
+        .glow-text {
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.8), 0 0 30px rgba(59, 130, 246, 0.5);
         }
     </style>
 </head>
 <body class="relative w-screen h-screen">
 
     <!-- 3D Canvas -->
-    <div id="canvas-container"></div>
+    <div id="webgl-container"></div>
 
-    <!-- UI Interfeysi -->
-    <div class="ui-container w-full h-full flex flex-col justify-between p-6 md:p-8">
+    <!-- UI Overlay Layer -->
+    <div class="ui-layer w-full h-full flex flex-col justify-between p-6 md:p-8">
 
-        <!-- Tepasi (Header) -->
+        <!-- Top Header -->
         <header class="flex justify-between items-center w-full">
             <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-indigo-600 flex items-center justify-center font-bold text-2xl shadow-lg shadow-cyan-500/40">
-                    <i class="fa-solid fa-globe text-white"></i>
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-400 to-indigo-600 flex items-center justify-center font-bold text-2xl shadow-lg shadow-cyan-500/40">
+                    <i class="fa-solid fa-earth-americas text-white"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-wider text-white glow-title">EARTH 3D EXPLORER</h1>
-                    <p class="text-xs text-cyan-400 font-mono tracking-widest uppercase">Interaktiv Sayyora Taqdimoti</p>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-wider text-white glow-text">NEXUS GLOBE 3D</h1>
+                    <p class="text-xs text-cyan-400 font-mono tracking-widest uppercase">Google Earth Style Interactive Map</p>
                 </div>
             </div>
 
-            <!-- Holat Paneli -->
-            <div class="hidden md:flex items-center space-x-6 glass-card px-6 py-3 rounded-2xl text-xs font-mono text-gray-300">
-                <div>Aylanish: <span id="autoRotateStatus" class="text-emerald-400 font-bold">FAOL</span></div>
+            <div class="hidden md:flex items-center space-x-6 glass-panel px-6 py-3 rounded-2xl text-xs font-mono text-gray-300">
+                <div>Holat: <span id="statusText" class="text-emerald-400 font-bold">ONLINE HD MAP</span></div>
                 <div class="h-4 w-px bg-gray-700"></div>
-                <div>Masshtab: <span id="zoomLevel" class="text-cyan-400 font-bold">100%</span></div>
+                <div>Aylanish: <span id="rotateStatus" class="text-cyan-400 font-bold">FAOL</span></div>
             </div>
         </header>
 
-        <!-- Qit'alar va Joylarga Tezkor Uchish (Fly-To Control) -->
+        <!-- Bottom Controls Bar -->
         <footer class="w-full flex flex-col md:flex-row justify-between items-center gap-4">
             
-            <!-- Qi'talar Tugmalari -->
-            <div class="flex flex-wrap gap-2 glass-card p-2 rounded-2xl interactive">
-                <button onclick="flyToContinent('asia')" class="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/40">
-                    <i class="fa-solid fa-location-dot mr-1"></i> Osiyo (Toshkent)
+            <!-- Quick Locations -->
+            <div class="flex flex-wrap gap-2 glass-panel p-2 rounded-2xl interactive">
+                <button onclick="flyToLocation(41.2995, 69.2401)" class="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/40">
+                    <i class="fa-solid fa-location-dot text-red-400 mr-1"></i> Toshkent (O'zbekiston)
                 </button>
-                <button onclick="flyToContinent('europe')" class="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 hover:bg-blue-500/30 text-gray-300 hover:text-blue-300">
-                    <i class="fa-solid fa-location-dot mr-1"></i> Yevropa
+                <button onclick="flyToLocation(48.8566, 2.3522)" class="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 hover:bg-blue-500/30 text-gray-300 hover:text-blue-300">
+                    <i class="fa-solid fa-location-dot mr-1"></i> Parij (Yevropa)
                 </button>
-                <button onclick="flyToContinent('america')" class="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 hover:bg-purple-500/30 text-gray-300 hover:text-purple-300">
-                    <i class="fa-solid fa-location-dot mr-1"></i> Shimoliy Amerika
+                <button onclick="flyToLocation(40.7128, -74.0060)" class="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 hover:bg-purple-500/30 text-gray-300 hover:text-purple-300">
+                    <i class="fa-solid fa-location-dot mr-1"></i> Nyu-York (AQSH)
                 </button>
-                <button onclick="resetView()" class="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 hover:bg-emerald-500/30 text-gray-300 hover:text-emerald-300">
-                    <i class="fa-solid fa-rotate-left mr-1"></i> Umumiy Ko'rinish
+                <button onclick="resetGlobalView()" class="px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 hover:bg-emerald-500/30 text-gray-300 hover:text-emerald-300">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Global Ko'rinish
                 </button>
             </div>
 
-            <!-- Interaktiv Boshqaruv Tugmalari -->
+            <!-- Zoom & Controls -->
             <div class="flex items-center space-x-3 interactive">
-                <button onclick="toggleAutoRotate()" class="glass-card p-3 rounded-xl text-cyan-400 hover:text-white hover:bg-cyan-500/20 transition-all border border-cyan-500/40">
-                    <i class="fa-solid fa-arrows-spin text-lg" id="rotateIcon"></i>
+                <button onclick="toggleRotation()" class="glass-card p-3 rounded-xl text-cyan-400 hover:text-white hover:bg-cyan-500/20 transition-all border border-cyan-500/40">
+                    <i class="fa-solid fa-arrows-spin text-lg"></i>
                 </button>
                 <button onclick="zoomIn()" class="glass-card p-3 rounded-xl text-cyan-400 hover:text-white hover:bg-cyan-500/20 transition-all border border-cyan-500/40">
-                    <i class="fa-solid fa-magnifying-glass-plus text-lg"></i>
+                    <i class="fa-solid fa-plus text-lg"></i>
                 </button>
                 <button onclick="zoomOut()" class="glass-card p-3 rounded-xl text-cyan-400 hover:text-white hover:bg-cyan-500/20 transition-all border border-cyan-500/40">
-                    <i class="fa-solid fa-magnifying-glass-minus text-lg"></i>
+                    <i class="fa-solid fa-minus text-lg"></i>
                 </button>
             </div>
         </footer>
@@ -113,62 +114,65 @@
     <!-- Three.js Engine Script -->
     <script>
         let scene, camera, renderer, controls;
-        let earthMesh, cloudsMesh, atmosphereMesh, starsParticles;
-        let isAutoRotating = true;
+        let earthMesh, cloudsMesh, starsParticles;
 
         function init() {
-            const container = document.getElementById('canvas-container');
+            const container = document.getElementById('webgl-container');
 
-            // 1. Scene setup
+            // Scene setup
             scene = new THREE.Scene();
 
-            // 2. Camera setup
+            // Camera setup
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 25);
+            camera.position.set(0, 0, 22);
 
-            // 3. Renderer setup
+            // Renderer setup
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             container.appendChild(renderer.domElement);
 
-            // 4. Orbit Controls (Aylantirish va Yaqinlashtirish)
+            // Orbit Controls (Google Earth kabi aylantirish va yaqinlashtirish)
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.rotateSpeed = 0.7;
+            controls.rotateSpeed = 0.8;
             controls.zoomSpeed = 1.2;
-            controls.minDistance = 12; // Maksimal yaqinlashish
-            controls.maxDistance = 50; // Maksimal uzoqlashish
+            controls.minDistance = 7.5; // Yaqinlashish chegari
+            controls.maxDistance = 45; // Uzoqlashish chegari
             controls.autoRotate = true;
-            controls.autoRotateSpeed = 0.8;
+            controls.autoRotateSpeed = 0.6;
 
-            // 5. Yorug'lik (Lighting)
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
             scene.add(ambientLight);
 
-            const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
-            sunLight.position.set(5, 3, 5);
-            scene.add(sunLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 3, 5);
+            scene.add(dirLight);
 
-            // 6. YER SHARI (Texture Procedural Generator - Canvas orqali xaritani hosil qilish)
-            const earthCanvas = createEarthTexture();
-            const earthTexture = new THREE.CanvasTexture(earthCanvas);
+            // Texture Loader (Yuqori sifatli NASA / Google Maps simulyatsiya teksturasi)
+            const textureLoader = new THREE.TextureLoader();
+            
+            // Yuqori sifatli Real Yer xaritasi
+            const earthTexture = textureLoader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg');
+            const bumpTexture = textureLoader.load('https://unpkg.com/three-globe/example/img/earth-topology.png');
 
+            // Yer Geometry & Material
             const earthGeometry = new THREE.SphereGeometry(6, 64, 64);
             const earthMaterial = new THREE.MeshPhongMaterial({
                 map: earthTexture,
-                shininess: 15
+                bumpMap: bumpTexture,
+                bumpScale: 0.15,
+                shininess: 5
             });
             earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
             scene.add(earthMesh);
 
-            // 7. BULUTLAR QATI (Clouds Layer)
-            const cloudsCanvas = createCloudsTexture();
-            const cloudsTexture = new THREE.CanvasTexture(cloudsCanvas);
-
-            const cloudsGeometry = new THREE.SphereGeometry(6.1, 64, 64);
+            // Bulutlar qatlami
+            const cloudsTexture = textureLoader.load('https://unpkg.com/three-globe/example/img/earth-clouds.png');
+            const cloudsGeometry = new THREE.SphereGeometry(6.08, 64, 64);
             const cloudsMaterial = new THREE.MeshStandardMaterial({
                 map: cloudsTexture,
                 transparent: true,
@@ -178,79 +182,15 @@
             cloudsMesh = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
             scene.add(cloudsMesh);
 
-            // 8. ATMOSFERA YOG'DUSI (Atmosphere Glow)
-            const atmosphereGeometry = new THREE.SphereGeometry(6.3, 64, 64);
-            const atmosphereMaterial = new THREE.MeshBasicMaterial({
-                color: 0x00f0ff,
-                transparent: true,
-                opacity: 0.12,
-                side: THREE.BackSide
-            });
-            atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-            scene.add(atmosphereMesh);
-
-            // 9. YULDUZLI FON (Starfield Background)
+            // Yulduzlar fonini yaratish
             createStarfield();
 
-            // Event Listeners
             window.addEventListener('resize', onWindowResize);
         }
 
-        // Dunyo xaritasini procedural yaratish (Fayl yuklash talab qilinmaydi)
-        function createEarthTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 2048;
-            canvas.height = 1024;
-            const ctx = canvas.getContext('2d');
-
-            // Okean foni
-            ctx.fillStyle = '#0a1d37';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Qit'alarni chizish (Procedural stil)
-            ctx.fillStyle = '#1e3a29';
-            for (let i = 0; i < 1500; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const r = Math.random() * 90 + 20;
-                
-                ctx.beginPath();
-                ctx.arc(x, y, r, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Muzliklar (Arktika va Antarktida)
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, 80);
-            ctx.fillRect(0, canvas.height - 90, canvas.width, 90);
-
-            return canvas;
-        }
-
-        // Bulutlar teksturasini yaratish
-        function createCloudsTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1024;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            for (let i = 0; i < 800; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const r = Math.random() * 50 + 10;
-
-                ctx.beginPath();
-                ctx.arc(x, y, r, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            return canvas;
-        }
-
-        // Yulduzlar tizimi
         function createStarfield() {
             const starGeometry = new THREE.BufferGeometry();
-            const starCount = 3000;
+            const starCount = 2500;
             const starPositions = new Float32Array(starCount * 3);
 
             for (let i = 0; i < starCount * 3; i++) {
@@ -258,78 +198,79 @@
             }
 
             starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-            const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.8 });
+            const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.8 });
             starsParticles = new THREE.Points(starGeometry, starMaterial);
             scene.add(starsParticles);
         }
 
-        // Xatolar va oyna o'lchami o'zgarganda
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // Animatsiya sikli
         function animate() {
             requestAnimationFrame(animate);
-
-            // Bulutlar Yerga nisbatan sal sekinroq aylanadi
-            cloudsMesh.rotation.y += 0.0004;
-            
+            cloudsMesh.rotation.y += 0.0003;
             controls.update();
             renderer.render(scene, camera);
         }
 
-        // Interaktiv Funksiyalar
-        function toggleAutoRotate() {
-            isAutoRotating = !isAutoRotating;
-            controls.autoRotate = isAutoRotating;
-            document.getElementById('autoRotateStatus').innerText = isAutoRotating ? "FAOL" : "TO'XTATILGAN";
-            document.getElementById('autoRotateStatus').className = isAutoRotating ? "text-emerald-400 font-bold" : "text-amber-400 font-bold";
+        // Interaktiv funksiyalar
+        function toggleRotation() {
+            controls.autoRotate = !controls.autoRotate;
+            const status = document.getElementById('rotateStatus');
+            status.innerText = controls.autoRotate ? "FAOL" : "TO'XTATILGAN";
+            status.className = controls.autoRotate ? "text-cyan-400 font-bold" : "text-amber-400 font-bold";
         }
 
         function zoomIn() {
-            camera.position.multiplyScalar(0.8);
+            camera.position.multiplyScalar(0.85);
         }
 
         function zoomOut() {
-            camera.position.multiplyScalar(1.2);
+            camera.position.multiplyScalar(1.15);
         }
 
-        function flyToContinent(region) {
+        // Belgilangan koordinataga uchib borish (Google Earth kabi Fly-To)
+        function flyToLocation(lat, lon) {
             controls.autoRotate = false;
-            document.getElementById('autoRotateStatus').innerText = "TO'XTATILGAN";
+            document.getElementById('rotateStatus').innerText = "TO'XTATILGAN";
 
-            let targetX = 0, targetY = 0, targetZ = 18;
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
 
-            if (region === 'asia') {
-                targetX = 10; targetY = 6; targetZ = 14;
-            } else if (region === 'europe') {
-                targetX = 2; targetY = 10; targetZ = 14;
-            } else if (region === 'america') {
-                targetX = -12; targetY = 6; targetZ = 12;
-            }
+            const distance = 11; // Yaqinlashish masofasi
+            const targetX = -(distance * Math.sin(phi) * Math.cos(theta));
+            const targetZ = (distance * Math.sin(phi) * Math.sin(theta));
+            const targetY = (distance * Math.cos(phi));
 
-            // Kamera tekis uchib borishi
-            let duration = 1000;
+            let duration = 1200;
             let start = performance.now();
             let startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
 
             function step(timestamp) {
                 let progress = Math.min((timestamp - start) / duration, 1);
-                camera.position.x = startPos.x + (targetX - startPos.x) * progress;
-                camera.position.y = startPos.y + (targetY - startPos.y) * progress;
-                camera.position.z = startPos.z + (targetZ - startPos.z) * progress;
-                if (progress < 1) requestAnimationFrame(step);
+                // Ease-in-out formulasi
+                let ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+                
+                camera.position.x = startPos.x + (targetX - startPos.x) * ease;
+                camera.position.y = startPos.y + (targetY - startPos.y) * ease;
+                camera.position.z = startPos.z + (targetZ - startPos.z) * ease;
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                }
             }
             requestAnimationFrame(step);
         }
 
-        function resetView() {
-            flyToContinent('reset');
-            controls.autoRotate = true;
-            document.getElementById('autoRotateStatus').innerText = "FAOL";
+        function resetGlobalView() {
+            flyToLocation(0, 0);
+            setTimeout(() => {
+                controls.autoRotate = true;
+                document.getElementById('rotateStatus').innerText = "FAOL";
+            }, 1200);
         }
 
         init();
