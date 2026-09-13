@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="uz" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innovatsion Veb Loyiha | Taqdimot</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#3B82F6',
+                            purple: '#8B5CF6',
+                            cyan: '#06B6D4'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Ikonkalari -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #06B6D4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-effect:hover {
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- Navigatsiya -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass-card border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center space-x-3 cursor-pointer">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center font-bold text-xl shadow-lg shadow-purple-500/30">
+                    <i class="fa-solid fa-code text-white"></i>
+                </div>
+                <span class="text-xl font-extrabold tracking-wider text-white">DEV<span class="gradient-text">PORTAL</span></span>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-8 font-medium text-slate-300">
+                <a href="#home" class="hover:text-purple-400 transition-colors">Bosh sahifa</a>
+                <a href="#about" class="hover:text-purple-400 transition-colors">Loyiha haqida</a>
+                <a href="#features" class="hover:text-purple-400 transition-colors">Imkoniyatlar</a>
+                <a href="#contact" class="hover:text-purple-400 transition-colors">Bog'lanish</a>
+            </div>
+
+            <a href="#contact" class="hidden sm:inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-md hover:opacity-90 transition-all duration-300 glow-effect">
+                Ko'rish
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Bo'limi -->
+    <section id="home" class="min-h-screen flex items-center justify-center pt-24 px-6 relative overflow-hidden">
+        <!-- Orqa fondagi yorug'lik effektlari -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-10 right-10 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-5xl mx-auto text-center z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-purple-500/30 text-purple-300 text-sm mb-8 animate-pulse">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Kelajak texnologiyasi taqdimoti
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
+                G'oyalarni <span class="gradient-text">Raqamli Haqiqatga</span> Aylantiramiz
+            </h1>
+            
+            <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
+                Zamonaviy web-ilovalar, tekor, xavfsiz va yuqori unumdorlikka ega dasturiy yechimlar. Ertangi kun standartlarini bugun namoyish etamiz.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="#features" class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 hover:scale-105 transition-all duration-300 glow-effect">
+                    Loyiha Bilan Tanishish
+                </a>
+                <button onclick="demoAlert()" class="w-full sm:w-auto px-8 py-4 glass-card text-slate-200 font-bold rounded-xl hover:bg-slate-800 hover:text-white transition-all border border-slate-700">
+                    <i class="fa-solid fa-play mr-2 text-purple-400"></i> Interaktiv Demo
+                </button>
+            </div>
+
+            <!-- Statistika -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 pt-10 border-t border-slate-800/80">
+                <div>
+                    <h3 class="text-3xl font-extrabold text-white">99.9%</h3>
+                    <p class="text-slate-400 text-sm mt-1">Ishonchlilik</p>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-extrabold text-white">10x</h3>
+                    <p class="text-slate-400 text-sm mt-1">Tezkorlik</p>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-extrabold text-white">100+</h3>
+                    <p class="text-slate-400 text-sm mt-1">Aktiv Foydalanuvchilar</p>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-extrabold text-white">24/7</h3>
+                    <p class="text-slate-400 text-sm mt-1">Qo'llab-quvvatlash</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Imkoniyatlar (Features) Bo'limi -->
+    <section id="features" class="py-24 px-6 relative">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Asosiy <span class="gradient-text">Afzalliklar</span></h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">Bizning veb-saytimiz va backend tizimimiz eng so'nggi standartlar asosida qurilgan.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Kartochka 1 -->
+                <div class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-all duration-300 group">
+                    <div class="w-14 h-14 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">O'ta Yuqori Tezlik</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Kod optimizatsiyasi va zamonaviy freymvorklar yordamida sahifalar darhol yuklanadi.
+                    </p>
+                </div>
+
+                <!-- Kartochka 2 -->
+                <div class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-all duration-300 group">
+                    <div class="w-14 h-14 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Xavfsizlik & Baza</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Ma'lumotlar xavfsiz saqlanadi hamda ma'lumotlar bazasi bilan mustahkam aloqa o'rnatilgan.
+                    </p>
+                </div>
+
+                <!-- Kartochka 3 -->
+                <div class="glass-card p-8 rounded-2xl hover:-translate-y-2 transition-all duration-300 group">
+                    <div class="w-14 h-14 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">To'liq Responsiv Dizayn</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Sayt barcha turdagi qurilmalarda — telefon, planshet va kompyuterlarda birdek mukammal ko'rinadi.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interaktiv Aloqa Bo'limi -->
+    <section id="contact" class="py-24 px-6 relative">
+        <div class="max-w-3xl mx-auto glass-card p-8 md:p-12 rounded-3xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-extrabold mb-3 text-white">Biz bilan bog'laning</h2>
+                <p class="text-slate-400 text-sm">Taqdimot jarayonida savollaringiz bo'lsa, xabar qoldiring.</p>
+            </div>
+
+            <form id="contactForm" class="space-y-6" onsubmit="handleFormSubmit(event)">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Ismingiz</label>
+                    <input type="text" required placeholder="Ismingizni kiriting" class="w-full px-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Xabar</label>
+                    <textarea rows="4" required placeholder="Xabaringizni yozing..." class="w-full px-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white transition-all"></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition-all glow-effect">
+                    Xabarni Yuborish
+                </button>
+            </form>
+
+            <div id="successMsg" class="hidden mt-6 p-4 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 rounded-xl text-center font-medium">
+                <i class="fa-solid fa-circle-check mr-2"></i> Rahmat! Xabaringiz muvaffaqiyatli qabul qilindi.
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 border-t border-slate-800 text-center text-slate-500 text-sm">
+        <p>© 2026 Barcha huquqlar himoyalangan. Taqdimot uchun maxsus yaratildi.</p>
+    </footer>
+
+    <!-- JavaScript Mantiqlari -->
+    <script>
+        function demoAlert() {
+            alert("Taqdimot rejimi: Veb-sayt barcha interaktiv elementlari bilan muvaffaqiyatli ishlamoqda!");
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const form = document.getElementById('contactForm');
+            const msg = document.getElementById('successMsg');
+            
+            form.reset();
+            msg.classList.remove('hidden');
+            
+            setTimeout(() => {
+                msg.classList.add('hidden');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
