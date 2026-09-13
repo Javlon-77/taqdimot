@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: taqdimot-worldcall
-    runtime: node
-    buildCommand: npm install
-    startCommand: npm start
-    envVars: []
