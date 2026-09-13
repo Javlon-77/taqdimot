@@ -6,16 +6,26 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: false
+  },
+  transports: ['websocket', 'polling']
+});
 
 app.use(express.static(__dirname));
-app.get('/health', (req, res) => res.json({ ok: true, service: 'WorldCall' }));
+app.get('/health', (req, res) => res.json({ ok: true, service: 'WorldCall', time: Date.now() }));
 
-// In-memory server registry. A room is intentionally limited to two people.
 const rooms = new Map();
 
 function clean(value, max = 80) {
-  return String(value || '').trim().slice(0, max);
+  return String(value ?? '').trim().slice(0, max);
+}
+
+function normalizeName(value) {
+  return clean(value, 40).replace(/[^a-zA-Z0-9_-]/g, '-').toUpperCase();
 }
 
 function makeServerName() {
@@ -26,27 +36,30 @@ function makePassword() {
   return String(crypto.randomInt(100000, 1000000));
 }
 
-function roomState(name) {
-  return rooms.get(name);
-}
-
-function ensureRoomAlive(name) {
-  const r = rooms.get(name);
-  if (!r) return null;
-  if (Date.now() - r.updatedAt > 6 * 60 * 60 * 1000 && r.clients.size === 0) {
-    rooms.delete(name);
-    return null;
+function removeSocketFromRoom(socket) {
+  const roomName = socket.data.room;
+  if (!roomName) return;
+  const room = rooms.get(roomName);
+  if (room) {
+    room.clients.delete(socket.id);
+    room.updatedAt = Date.now();
+    if (room.clients.size === 0) rooms.delete(roomName);
   }
-  return r;
+  socket.to(roomName).emit('peer-left');
+  socket.leave(roomName);
+  socket.data.room = null;
 }
 
 io.on('connection', socket => {
-  socket.on('create-server', ({ name }) => {
-    let serverName = clean(name, 40).replace(/[^a-zA-Z0-9_-]/g, '-').toUpperCase();
+  socket.on('create-server', ({ name } = {}) => {
+    let serverName = normalizeName(name);
     if (!serverName) serverName = makeServerName();
 
     if (rooms.has(serverName)) {
-      socket.emit('server-created', { ok: false, error: 'Bu server nomi band. Boshqa nom tanlang.' });
+      socket.emit('server-created', {
+        ok: false,
+        error: 'Bu server nomi band. Boshqa nom tanlang.'
+      });
       return;
     }
 
@@ -57,25 +70,35 @@ io.on('connection', socket => {
       updatedAt: Date.now()
     });
 
-    socket.emit('server-created', { ok: true, serverName, password });
+    socket.emit('server-created', {
+      ok: true,
+      serverName,
+      password
+    });
   });
 
-  socket.on('join-server', ({ name, password }) => {
-    const serverName = clean(name, 40).toUpperCase();
+  socket.on('join-server', ({ name, password } = {}) => {
+    const serverName = normalizeName(name);
     const pass = clean(password, 30);
-    const room = ensureRoomAlive(serverName);
+    const room = rooms.get(serverName);
 
-    if (!room) {
+    if (!serverName || !room) {
       socket.emit('join-result', { ok: false, error: 'Server topilmadi.' });
       return;
     }
+
     if (room.password !== pass) {
       socket.emit('join-result', { ok: false, error: 'Parol noto‘g‘ri.' });
       return;
     }
+
     if (room.clients.size >= 2 && !room.clients.has(socket.id)) {
       socket.emit('join-result', { ok: false, error: 'Serverda 2 kishi allaqachon bor.' });
       return;
+    }
+
+    if (socket.data.room && socket.data.room !== serverName) {
+      removeSocketFromRoom(socket);
     }
 
     const wasEmpty = room.clients.size === 0;
@@ -84,42 +107,27 @@ io.on('connection', socket => {
     socket.join(serverName);
     socket.data.room = serverName;
 
-    socket.emit('join-result', { ok: true, serverName, initiator: wasEmpty });
+    socket.emit('join-result', {
+      ok: true,
+      serverName,
+      initiator: wasEmpty
+    });
+
     if (!wasEmpty) socket.to(serverName).emit('peer-joined');
   });
 
-  socket.on('signal', ({ serverName, data }) => {
-    const room = socket.data.room;
-    if (!room || room !== clean(serverName, 40).toUpperCase()) return;
-    socket.to(room).emit('signal', data);
+  socket.on('signal', ({ serverName, data } = {}) => {
+    const roomName = normalizeName(serverName);
+    if (!socket.data.room || socket.data.room !== roomName) return;
+    socket.to(roomName).emit('signal', data);
   });
 
-  socket.on('leave-server', () => {
-    const room = socket.data.room;
-    if (!room) return;
-    const state = roomState(room);
-    if (state) {
-      state.clients.delete(socket.id);
-      state.updatedAt = Date.now();
-      if (state.clients.size === 0) rooms.delete(room);
-    }
-    socket.leave(room);
-    socket.to(room).emit('peer-left');
-    socket.data.room = null;
-  });
+  socket.on('leave-server', () => removeSocketFromRoom(socket));
 
-  socket.on('disconnect', () => {
-    const room = socket.data.room;
-    if (!room) return;
-    const state = roomState(room);
-    if (state) {
-      state.clients.delete(socket.id);
-      state.updatedAt = Date.now();
-      if (state.clients.size === 0) rooms.delete(room);
-    }
-    socket.to(room).emit('peer-left');
-  });
+  socket.on('disconnect', () => removeSocketFromRoom(socket));
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`WorldCall server running on ${PORT}`));
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`WorldCall server running on port ${PORT}`);
+});
