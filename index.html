@@ -1,436 +1,327 @@
 <!DOCTYPE html>
-<html lang="uz" class="dark scroll-smooth">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS OS | Kelajak Texnologiyalari Platformasi</title>
-    <!-- Tailwind CSS -->
+    <title>CYBER-CORE 3D Interactive Audio-Visual Engine</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        cyber: {
-                            bg: '#05070f',
-                            card: 'rgba(13, 19, 36, 0.7)',
-                            neonBlue: '#00f0ff',
-                            neonPurple: '#7000ff',
-                            neonPink: '#ff007f'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome & Chart.js -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <!-- Three.js 3D Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
-            background-color: #05070f;
-            color: #f3f4f6;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            overflow-x: hidden;
+            margin: 0;
+            overflow: hidden;
+            background-color: #030014;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        #webgl-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .interactive {
+            pointer-events: auto;
         }
         .glass-panel {
-            background: rgba(13, 19, 36, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 240, 255, 0.15);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
-        .neon-glow {
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-        }
-        .neon-text-blue {
-            text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
-        }
-        .neon-text-purple {
-            text-shadow: 0 0 10px rgba(112, 0, 255, 0.6);
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #05070f;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #00f0ff;
+        .glow-text {
+            text-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 30px rgba(147, 51, 234, 0.6);
         }
     </style>
 </head>
-<body class="relative">
+<body class="relative w-screen h-screen">
 
-    <!-- 3D Background Canvas -->
-    <canvas id="hero-canvas" class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"></canvas>
+    <!-- 3D Canvas -->
+    <div id="webgl-container"></div>
 
-    <!-- Header / Navbar -->
-    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-cyan-500/20">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center space-x-3 cursor-pointer">
-                <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center font-black text-xl text-white shadow-lg shadow-cyan-500/30">
-                    <i class="fa-solid fa-atom animate-spin-slow"></i>
+    <!-- UI Overlay Layer -->
+    <div class="ui-layer w-full h-full flex flex-col justify-between p-6 md:p-10">
+
+        <!-- Top Header -->
+        <header class="flex justify-between items-center w-full">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xl shadow-lg shadow-cyan-500/30">
+                    <i class="fa-solid fa-cubes text-white"></i>
                 </div>
-                <span class="text-2xl font-black tracking-widest text-white">NEXUS<span class="text-cyan-400">.AI</span></span>
-            </div>
-            
-            <div class="hidden md:flex items-center space-x-8 text-sm uppercase tracking-wider font-semibold text-gray-300">
-                <a href="#overview" class="hover:text-cyan-400 transition-colors">Tizim Haqida</a>
-                <a href="#analytics" class="hover:text-cyan-400 transition-colors">Analitika</a>
-                <a href="#terminal" class="hover:text-cyan-400 transition-colors">Terminal CLI</a>
-                <a href="#modules" class="hover:text-cyan-400 transition-colors">Modullar</a>
-            </div>
-
-            <div class="flex items-center space-x-4">
-                <div class="px-3 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 text-xs font-mono flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> ONLINE SYSTEM
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Container -->
-    <main class="pt-28 px-4 md:px-8 max-w-7xl mx-auto space-y-16 pb-20">
-
-        <!-- HERO SECTION -->
-        <section id="overview" class="min-h-[80vh] flex flex-col justify-center items-center text-center relative pt-10">
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-cyan-500/40 text-cyan-300 text-xs tracking-widest uppercase mb-6 neon-glow">
-                <i class="fa-solid fa-microchip"></i> Keyingi Avlod Veb Tizimi
-            </div>
-
-            <h1 class="text-5xl md:text-8xl font-black tracking-tight mb-6 uppercase text-white leading-tight">
-                Kelajak <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 neon-text-blue">Interfeysi</span>
-            </h1>
-
-            <p class="text-lg md:text-2xl text-gray-400 max-w-3xl mb-10 font-light leading-relaxed">
-                Katta hajmdagi ma'lumotlarni qayta ishlash, AI algoritmlari va ultra-tezkor platforma namoyish markazi.
-            </p>
-
-            <!-- Counter Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl mt-4">
-                <div class="glass-panel p-6 rounded-2xl text-center border-l-4 border-cyan-400">
-                    <div class="text-3xl md:text-4xl font-black text-white font-mono" id="count1">0</div>
-                    <div class="text-xs uppercase tracking-wider text-cyan-400 mt-1 font-semibold">Tugunlar (Nodes)</div>
-                </div>
-                <div class="glass-panel p-6 rounded-2xl text-center border-l-4 border-purple-500">
-                    <div class="text-3xl md:text-4xl font-black text-white font-mono" id="count2">0</div>
-                    <div class="text-xs uppercase tracking-wider text-purple-400 mt-1 font-semibold">Amallar/Sek</div>
-                </div>
-                <div class="glass-panel p-6 rounded-2xl text-center border-l-4 border-pink-500">
-                    <div class="text-3xl md:text-4xl font-black text-white font-mono">99.99%</div>
-                    <div class="text-xs uppercase tracking-wider text-pink-400 mt-1 font-semibold">Uptime Aniqligi</div>
-                </div>
-                <div class="glass-panel p-6 rounded-2xl text-center border-l-4 border-emerald-400">
-                    <div class="text-3xl md:text-4xl font-black text-white font-mono">&lt; 1ms</div>
-                    <div class="text-xs uppercase tracking-wider text-emerald-400 mt-1 font-semibold">Kechikish (Latency)</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- DASHBOARD & CHART SECTION -->
-        <section id="analytics" class="space-y-6">
-            <div class="flex justify-between items-end border-b border-gray-800 pb-4">
                 <div>
-                    <h2 class="text-3xl font-extrabold text-white flex items-center gap-3">
-                        <i class="fa-solid fa-chart-line text-cyan-400"></i> Jonli Analitika Markazi
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1">Real vaqt rejimida tizim unumdorligini monitoring qilish</p>
+                    <h1 class="text-2xl font-black tracking-wider text-white glow-text">AURA 3D STUDIO</h1>
+                    <p class="text-xs text-cyan-400 font-mono tracking-widest uppercase">Next-Gen Audio-Visual System</p>
                 </div>
-                <button onclick="updateChartData()" class="px-4 py-2 glass-panel border border-cyan-500/50 hover:bg-cyan-500/20 text-cyan-400 rounded-lg text-sm font-semibold transition">
-                    <i class="fa-solid fa-rotate mr-1"></i> Yangilash
+            </div>
+
+            <!-- Audio Input Control -->
+            <button id="micBtn" onclick="toggleAudioInput()" class="interactive px-5 py-3 glass-panel rounded-2xl border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 hover:text-white transition-all duration-300 flex items-center gap-3 font-semibold text-sm">
+                <i class="fa-solid fa-microphone" id="micIcon"></i>
+                <span id="micText">Ovoz Vizualizatsiyasini Yoqish</span>
+            </button>
+        </header>
+
+        <!-- Center Interactive Hint -->
+        <div class="text-center my-auto pointer-events-none opacity-80 transition-opacity duration-500" id="centerHint">
+            <h2 class="text-3xl md:text-5xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-indigo-400 glow-text mb-2">
+                EKRANNI CHIZIB KO'RING
+            </h2>
+            <p class="text-sm font-mono text-gray-300">Sichqonchani harakatlantiring yoki tugmalarni bosing</p>
+        </div>
+
+        <!-- Bottom Controls Bar -->
+        <footer class="w-full flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <!-- Mode Switcher -->
+            <div class="flex gap-2 glass-panel p-2 rounded-2xl interactive border border-white/10">
+                <button onclick="setMode('matrix')" class="px-5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/40">
+                    <i class="fa-solid fa-network-wired mr-1"></i> Matrix
+                </button>
+                <button onclick="setMode('core')" class="px-5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 hover:bg-purple-500/30 text-gray-300 hover:text-purple-300">
+                    <i class="fa-solid fa-atom mr-1"></i> Core
+                </button>
+                <button onclick="setMode('vortex')" class="px-5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-300 hover:bg-pink-500/30 text-gray-300 hover:text-pink-300">
+                    <i class="fa-solid fa-circle-notch mr-1"></i> Vortex
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Main Line Chart -->
-                <div class="lg:col-span-2 glass-panel p-6 rounded-2xl">
-                    <h3 class="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-wave-square text-cyan-400"></i> Tizim Yuklamasi (Real-Time Traffic)
-                    </h3>
-                    <div class="relative h-72">
-                        <canvas id="trafficChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Doughnut Chart -->
-                <div class="glass-panel p-6 rounded-2xl flex flex-col justify-between">
-                    <h3 class="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-pie-chart text-purple-400"></i> Resurslar Taqsimoti
-                    </h3>
-                    <div class="relative h-56 flex items-center justify-center">
-                        <canvas id="resourceChart"></canvas>
-                    </div>
-                    <div class="mt-4 text-xs text-gray-400 text-center font-mono">
-                        CPU: 42% | RAM: 68% | GPU: 85%
-                    </div>
+            <!-- Live Status Indicator -->
+            <div class="glass-panel px-6 py-3 rounded-2xl flex items-center gap-6 font-mono text-xs text-gray-300">
+                <div>FPS: <span id="fpsCount" class="text-emerald-400 font-bold">60</span></div>
+                <div class="h-4 w-px bg-gray-700"></div>
+                <div>Particles: <span class="text-cyan-400 font-bold">12,000</span></div>
+                <div class="h-4 w-px bg-gray-700"></div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Realtime Engine
                 </div>
             </div>
-        </section>
+        </footer>
+    </div>
 
-        <!-- INTERACTIVE TERMINAL SECTION -->
-        <section id="terminal" class="space-y-4">
-            <div>
-                <h2 class="text-3xl font-extrabold text-white flex items-center gap-3">
-                    <i class="fa-solid fa-terminal text-emerald-400"></i> Interaktiv Tizim Terminali
-                </h2>
-                <p class="text-gray-400 text-sm">Tomoshabinlar oldida buyruqlarni simulyatsiya qilish uchun CLI interfeys</p>
-            </div>
-
-            <div class="glass-panel rounded-2xl border border-emerald-500/30 overflow-hidden font-mono text-sm shadow-2xl">
-                <!-- Terminal Bar -->
-                <div class="bg-slate-900/90 px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
-                        <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
-                        <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
-                        <span class="text-xs text-gray-400 ml-2">root@nexus-core:~</span>
-                    </div>
-                    <span class="text-xs text-emerald-400">BASH / v4.9.2</span>
-                </div>
-
-                <!-- Terminal Body -->
-                <div id="terminal-output" class="p-6 h-64 overflow-y-auto space-y-2 text-gray-300">
-                    <div><span class="text-emerald-400">NexusOS v3.0</span> tayyor. Buyruqlarni ko'rish uchun <span class="text-cyan-400 font-bold">'help'</span> deb yozing.</div>
-                </div>
-
-                <!-- Terminal Input -->
-                <form id="terminal-form" class="px-6 py-3 bg-slate-950/80 border-t border-gray-800 flex items-center gap-2">
-                    <span class="text-cyan-400 font-bold">nexus&gt;</span>
-                    <input type="text" id="terminal-input" autocomplete="off" placeholder="Buyruq kiriting (masalan: help, status, run)..." class="w-full bg-transparent outline-none text-emerald-400 font-mono">
-                </form>
-            </div>
-        </section>
-
-        <!-- MODULES / FEATURES GRID -->
-        <section id="modules" class="space-y-6 pt-6">
-            <h2 class="text-3xl font-extrabold text-white">Platforma <span class="text-cyan-400">Modullari</span></h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass-panel p-8 rounded-2xl hover:border-cyan-400 transition-all duration-300 group">
-                    <div class="w-14 h-14 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-brain"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-2">AI Neyron Tarmog'i</h3>
-                    <p class="text-gray-400 text-sm">Mashinali o'rgatish va ma'lumotlarni chuqur tahlil qiluvchi aqlli neyron model.</p>
-                </div>
-
-                <div class="glass-panel p-8 rounded-2xl hover:border-purple-500 transition-all duration-300 group">
-                    <div class="w-14 h-14 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-network-wired"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-2">Kvant Arxitekturasi</h3>
-                    <p class="text-gray-400 text-sm">Tarqoq tugunlar bo'ylab ma'lumotlarni o'ta yuqori tezlikda sinxronlash imkoniyati.</p>
-                </div>
-
-                <div class="glass-panel p-8 rounded-2xl hover:border-pink-500 transition-all duration-300 group">
-                    <div class="w-14 h-14 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-lock"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-2">Kriptografik Xavfsizlik</h3>
-                    <p class="text-gray-400 text-sm">End-to-End shifrlash va ko'p bosqichli autentifikatsiya himoyasi.</p>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="glass-panel border-t border-cyan-500/20 py-8 text-center text-gray-500 text-xs tracking-wider uppercase font-mono">
-        <p>© NEXUS OS PLATFORM. BARCHA HUQUQLAR HIMOYALANGAN.</p>
-    </footer>
-
-    <!-- SCRIPT LOGIC -->
+    <!-- Three.js Engine Script -->
     <script>
-        // 1. 3D ORBIT CANVAS ANIMATION
-        const canvas = document.getElementById('hero-canvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
-        let particles = [];
+        let scene, camera, renderer, particleSystem, geometry, material;
+        let particleCount = 12000;
+        let positions, colors;
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+        let currentMode = 'matrix';
+        
+        // Audio Variables
+        let audioContext, analyser, dataArray, micStream;
+        let isAudioActive = false;
 
-        function resizeCanvas() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        function init() {
+            const container = document.getElementById('webgl-container');
 
-        class Particle {
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.radius = Math.random() * 2 + 0.5;
-                this.vx = (Math.random() - 0.5) * 0.8;
-                this.vy = (Math.random() - 0.5) * 0.8;
-                this.color = Math.random() > 0.5 ? '#00f0ff' : '#7000ff';
-            }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = this.color;
-                ctx.fill();
-            }
-        }
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x030014, 0.0015);
 
-        for (let i = 0; i < 75; i++) {
-            particles.push(new Particle());
-        }
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 3000);
+            camera.position.z = 1000;
 
-        function animateCanvas() {
-            ctx.clearRect(0, 0, width, height);
-            
-            // Connect nearby particles with lines
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
 
-                    if (dist < 120) {
-                        ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dist / 120 * 0.8})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
-                    }
-                }
-            }
+            // Particles Geometry & Material
+            geometry = new THREE.BufferGeometry();
+            positions = new Float32Array(particleCount * 3);
+            colors = new Float32Array(particleCount * 3);
 
-            particles.forEach(p => {
-                p.update();
-                p.draw();
+            createMatrixShape();
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            // Custom glowing particle texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 16;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(8,8,0, 8,8,8);
+            grad.addColorStop(0, 'rgba(255,255,255,1)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0,0,16,16);
+
+            const pTexture = new THREE.CanvasTexture(canvas);
+
+            material = new THREE.PointsMaterial({
+                size: 6,
+                vertexColors: true,
+                map: pTexture,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             });
-            requestAnimationFrame(animateCanvas);
-        }
-        animateCanvas();
 
-        // 2. COUNTER ANIMATION
-        function animateValue(id, start, end, duration) {
-            const obj = document.getElementById(id);
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+
+            // Event Listeners
+            document.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createMatrixShape() {
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                positions[i3] = (Math.random() - 0.5) * 2000;
+                positions[i3 + 1] = (Math.random() - 0.5) * 2000;
+                positions[i3 + 2] = (Math.random() - 0.5) * 2000;
+
+                colors[i3] = 0.0;
+                colors[i3 + 1] = 0.8 + Math.random() * 0.2;
+                colors[i3 + 2] = 1.0;
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            const pos = geometry.attributes.position.array;
+            const col = geometry.attributes.color.array;
+
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                if (mode === 'matrix') {
+                    pos[i3] = (Math.random() - 0.5) * 2000;
+                    pos[i3 + 1] = (Math.random() - 0.5) * 2000;
+                    pos[i3 + 2] = (Math.random() - 0.5) * 2000;
+
+                    col[i3] = 0.0;
+                    col[i3 + 1] = 0.8;
+                    col[i3 + 2] = 1.0;
+                } else if (mode === 'core') {
+                    const radius = 350 + Math.random() * 100;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos((Math.random() * 2) - 1);
+
+                    pos[i3] = radius * Math.sin(phi) * Math.cos(theta);
+                    pos[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    pos[i3 + 2] = radius * Math.cos(phi);
+
+                    col[i3] = 0.7;
+                    col[i3 + 1] = 0.1;
+                    col[i3 + 2] = 1.0;
+                } else if (mode === 'vortex') {
+                    const u = Math.random();
+                    const angle = i * 0.05;
+                    const dist = u * 900;
+
+                    pos[i3] = Math.cos(angle) * dist;
+                    pos[i3 + 1] = (Math.random() - 0.5) * 300;
+                    pos[i3 + 2] = Math.sin(angle) * dist;
+
+                    col[i3] = 1.0;
+                    col[i3 + 1] = 0.0;
+                    col[i3 + 2] = 0.5;
                 }
-            };
-            window.requestAnimationFrame(step);
+            }
+            geometry.attributes.position.needsUpdate = true;
+            geometry.attributes.color.needsUpdate = true;
         }
-        animateValue("count1", 0, 1420, 2000);
-        animateValue("count2", 0, 894000, 2500);
 
-        // 3. CHART.JS INTEGRATION
-        const ctxTraffic = document.getElementById('trafficChart').getContext('2d');
-        const trafficChart = new Chart(ctxTraffic, {
-            type: 'line',
-            data: {
-                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-                datasets: [{
-                    label: 'Soʻrovlar Soni',
-                    data: [1200, 1900, 3000, 5000, 4200, 6800, 8900],
-                    borderColor: '#00f0ff',
-                    backgroundColor: 'rgba(0, 240, 255, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } }
+        function onMouseMove(e) {
+            mouseX = (e.clientX - window.innerWidth / 2);
+            mouseY = (e.clientY - window.innerHeight / 2);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Microphone Audio Analyzer
+        async function toggleAudioInput() {
+            const btnText = document.getElementById('micText');
+            const btnIcon = document.getElementById('micIcon');
+
+            if (!isAudioActive) {
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 128;
+                    const source = audioContext.createMediaStreamSource(micStream);
+                    source.connect(analyser);
+                    dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    
+                    isAudioActive = true;
+                    btnText.innerText = "Audio Rejim Faol";
+                    btnIcon.className = "fa-solid fa-volume-high text-emerald-400 animate-bounce";
+                } catch (err) {
+                    alert("Mikrofondan foydalanishga ruxsat berilmadi.");
                 }
+            } else {
+                if(micStream) micStream.getTracks().forEach(track => track.stop());
+                isAudioActive = false;
+                btnText.innerText = "Ovoz Vizualizatsiyasini Yoqish";
+                btnIcon.className = "fa-solid fa-microphone";
             }
-        });
-
-        const ctxResource = document.getElementById('resourceChart').getContext('2d');
-        const resourceChart = new Chart(ctxResource, {
-            type: 'doughnut',
-            data: {
-                labels: ['CPU', 'RAM', 'GPU'],
-                datasets: [{
-                    data: [42, 68, 85],
-                    backgroundColor: ['#00f0ff', '#7000ff', '#ff007f'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
-            }
-        });
-
-        function updateChartData() {
-            trafficChart.data.datasets[0].data = trafficChart.data.datasets[0].data.map(() => Math.floor(Math.random() * 8000 + 1000));
-            trafficChart.update();
         }
 
-        // 4. INTERACTIVE TERMINAL LOGIC
-        const termInput = document.getElementById('terminal-input');
-        const termOutput = document.getElementById('terminal-output');
-        const termForm = document.getElementById('terminal-form');
+        // Main Animation Loop
+        let frameCount = 0;
+        let lastTime = performance.now();
 
-        termForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const cmd = termInput.value.trim().toLowerCase();
-            termInput.value = '';
+        function animate() {
+            requestAnimationFrame(animate);
 
-            const userLine = document.createElement('div');
-            userLine.innerHTML = `<span class="text-cyan-400">nexus&gt;</span> ${cmd}`;
-            termOutput.appendChild(userLine);
-
-            const resLine = document.createElement('div');
-            resLine.className = 'text-gray-300 font-mono';
-
-            switch(cmd) {
-                case 'help':
-                    resLine.innerHTML = `Mavjud buyruqlar:<br>
-                    <span class="text-cyan-400">- status</span> : Tizim holatini tekshirish<br>
-                    <span class="text-cyan-400">- run</span> : AI modelini ishga tushirish<br>
-                    <span class="text-cyan-400">- deploy</span> : Klasterlarni yangilash<br>
-                    <span class="text-cyan-400">- clear</span> : Terminalni tozalash`;
-                    break;
-                case 'status':
-                    resLine.innerHTML = `<span class="text-emerald-400">[ OK ] Barcha 1,420 ta tugun faol. Protsessual kechikish 0.8ms.</span>`;
-                    break;
-                case 'run':
-                    resLine.innerHTML = `<span class="text-yellow-400">[ PROCESSING ] AI neyron modeli ishga tushirildi... Optimallashtirildi!</span>`;
-                    break;
-                case 'deploy':
-                    resLine.innerHTML = `<span class="text-purple-400">[ DEPLOYING ] Yangi versiya kodi barcha serverlarga muvaffaqiyatli tarqatildi.</span>`;
-                    break;
-                case 'clear':
-                    termOutput.innerHTML = '';
-                    return;
-                default:
-                    resLine.innerHTML = `<span class="text-red-400">Noma'lum buyruq '${cmd}'. Mavjud buyruqlarni ko'rish uchun 'help' deb yozing.</span>`;
+            // FPS Calculation
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                document.getElementById('fpsCount').innerText = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
             }
 
-            termOutput.appendChild(resLine);
-            termOutput.scrollTop = termOutput.scrollHeight;
-        });
+            // Smooth camera movement towards mouse
+            targetX += (mouseX - targetX) * 0.03;
+            targetY += (-mouseY - targetY) * 0.03;
+
+            particleSystem.rotation.y += 0.002;
+            particleSystem.rotation.x += 0.001;
+
+            camera.position.x = targetX * 0.8;
+            camera.position.y = targetY * 0.8;
+            camera.lookAt(scene.position);
+
+            // Audio reaction logic
+            if (isAudioActive && analyser) {
+                analyser.getByteFrequencyData(dataArray);
+                let avg = 0;
+                for (let i = 0; i < dataArray.length; i++) avg += dataArray[i];
+                avg = avg / dataArray.length;
+
+                const scale = 1 + (avg / 100);
+                particleSystem.scale.set(scale, scale, scale);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+        animate();
     </script>
 </body>
 </html>
