@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>WorldCall — Taqdimot</title>
+<title>WorldCall — Secure Video Call</title>
+<meta name="theme-color" content="#060914">
+<meta name="description" content="WorldCall — ikki kishilik xavfsiz video qo‘ng‘iroq xonasi.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 <style>
 :root{--bg:#060914;--panel:#10182bdf;--line:#2b3a5a;--muted:#9aa8c4;--a:#7668ff;--b:#20bdd9;--good:#49e2a7;--danger:#c13b55}
@@ -42,29 +46,74 @@ main{width:min(1150px,94%);margin:auto;padding:42px 0}.hero{text-align:center;ma
 <script>
 const $=id=>document.getElementById(id);
 let peer=null,currentPeerId='',currentServer='',currentPassword='',stream=null,mediaCall=null,isHost=false,remotePresent=false,micOn=true,camOn=true;
+let connectingTimer=null,callStartedAt=0;
+const MAX_NAME=40, MAX_PASSWORD=6;
+function setBusy(btn,busy,text){if(!btn)return;btn.disabled=busy;if(text)btn.textContent=text}
+function stopTimer(){if(connectingTimer){clearTimeout(connectingTimer);connectingTimer=null}}
+function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+function safePlay(video){const p=video?.play?.();if(p?.catch)p.catch(()=>{})}
 function clean(s){return String(s||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'-').slice(0,40)}
 async function sha256(text){const data=new TextEncoder().encode(text);const hash=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function securePassword(){const a=new Uint32Array(1);crypto.getRandomValues(a);return String(100000+(a[0]%900000))}
 async function makePeerId(name,password){const hash=await sha256('WorldCall::'+clean(name)+'::'+String(password).trim());return 'wc'+hash.slice(0,24)}
 function status(text,ok=false){$('status').textContent='● '+text;$('status').className='status '+(ok?'ok':'')}
 function msg(id,text,ok=false){$(id).textContent=text;$(id).className='msg '+(ok?'ok':'')}
-function destroyCall(){try{mediaCall?.close()}catch(e){}try{peer?.destroy()}catch(e){}mediaCall=null;peer=null;currentPeerId='';remotePresent=false}
+function destroyCall(){stopTimer();try{mediaCall?.close()}catch(e){}try{peer?.destroy()}catch(e){}mediaCall=null;peer=null;currentPeerId='';remotePresent=false}
 function openCallUI(name,password,host){currentServer=name;currentPassword=password;isHost=host;$('homePage').style.display='none';$('callPage').classList.add('show');$('roomName').textContent='SERVER: '+name;$('wait').textContent=host?'Ikkinchi odam serverga qo‘shilishini kutmoqda…':'Server egasiga ulanmoqda…';$('wait').classList.remove('hidden')}
 function showRemote(s){if(!s)return;const v=$('remote');v.srcObject=s;v.autoplay=true;v.playsInline=true;remotePresent=true;$('wait').classList.add('hidden');status('Ulangan',true);$('conn').textContent='● Video qo‘ng‘iroq ulandi';const p=v.play();if(p?.catch)p.catch(()=>{});setTimeout(()=>{const q=v.play();if(q?.catch)q.catch(()=>{})},250)}
-async function setupHost(name,password){const id=await makePeerId(name,password);currentPeerId=id;peer=new Peer(id,{debug:1});peer.on('open',()=>{status('Server faol',true);$('conn').textContent='● Ikkinchi odam kutilmoqda';openCallUI(name,password,true)});peer.on('call',call=>{if(!stream){call.close();return}if(mediaCall){try{mediaCall.close()}catch(e){}}mediaCall=call;call.answer(stream);bindCall(call)});peer.on('error',e=>{if(e.type==='unavailable-id')msg('createMsg','Bu server allaqachon faol. Boshqa nom tanlang.');else msg('createMsg','Ulanish xatosi: '+(e.message||e.type))});peer.on('disconnected',()=>status('Signal serveri uzildi'));peer.on('close',()=>status('Server yopildi'))}
-function bindCall(call){call.on('stream',showRemote);call.on('close',()=>{remotePresent=false;$('remote').srcObject=null;$('wait').textContent='Suhbatdosh chiqib ketdi…';$('wait').classList.remove('hidden');$('conn').textContent='Suhbatdosh yo‘q'});call.on('error',()=>status('Video ulanish xatosi'))}
-async function setupGuest(name,password){const id=await makePeerId(name,password);currentPeerId=id;peer=new Peer({debug:1});peer.on('open',()=>{status('Server egasi qidirilmoqda…');mediaCall=peer.call(id,stream);if(!mediaCall){msg('joinMsg','Server topilmadi yoki egasi sahifani yopgan.');return}bindCall(mediaCall)});peer.on('error',e=>{if(e.type==='peer-unavailable'){msg('joinMsg','Server topilmadi. Server egasi sahifani ochiq qoldirsin.');$('homePage').style.display='block';$('callPage').classList.remove('show')}else msg('joinMsg','Ulanish xatosi: '+(e.message||e.type))});peer.on('disconnected',()=>status('Signal serveri uzildi'))}
+async function setupHost(name,password){const id=await makePeerId(name,password);currentPeerId=id;peer=new Peer(id,{debug:1});peer.on('open',()=>{status('Server faol',true);$('conn').textContent='● Ikkinchi odam kutilmoqda';openCallUI(name,password,true)});peer.on('call',call=>{
+  if(!stream){call.close();return}
+  if(mediaCall){call.close();return}
+  mediaCall=call; call.answer(stream); callStartedAt=Date.now(); bindCall(call);
+});peer.on('error',e=>{if(e.type==='unavailable-id')msg('createMsg','Bu server allaqachon faol. Boshqa nom tanlang.');else msg('createMsg','Ulanish xatosi: '+(e.message||e.type))});peer.on('disconnected',()=>status('Signal serveri uzildi'));peer.on('close',()=>status('Server yopildi'))}
+function bindCall(call){
+  call.on('stream',showRemote);
+  call.on('close',()=>{
+    if(mediaCall===call)mediaCall=null;
+    remotePresent=false;$('remote').srcObject=null;
+    $('wait').textContent='Suhbatdosh chiqib ketdi…';$('wait').classList.remove('hidden');
+    $('conn').textContent='Suhbatdosh yo‘q';
+    if(isHost)status('Server faol',true); else status('Ulanish tugadi');
+  });
+  call.on('error',()=>{if(mediaCall===call)mediaCall=null;status('Video ulanish xatosi')});
+}
+async function setupGuest(name,password){
+  const id=await makePeerId(name,password);currentPeerId=id;peer=new Peer({debug:0});
+  peer.on('open',()=>{
+    status('Server egasi qidirilmoqda…');
+    mediaCall=peer.call(id,stream,{metadata:{app:'WorldCall',version:'1.0'}});
+    if(!mediaCall){msg('joinMsg','Server topilmadi yoki egasi sahifani yopgan.');return}
+    callStartedAt=Date.now();bindCall(mediaCall);
+    stopTimer();connectingTimer=setTimeout(()=>{
+      if(!remotePresent){msg('joinMsg','Ulanish vaqti tugadi. Server nomi va parolini tekshiring.');goHome()}
+    },15000);
+  });
+  peer.on('error',e=>{
+    if(e.type==='peer-unavailable'){msg('joinMsg','Server topilmadi. Server egasi sahifani ochiq qoldirsin.');goHome()}
+    else msg('joinMsg','Ulanish xatosi: '+(e.message||e.type));
+  });
+  peer.on('disconnected',()=>status('Signal serveri uzildi'));
+}
 async function getCamera(){try{return await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}},audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}catch(e){throw new Error('Kamera va mikrofon ruxsatini bering.')}}
-$('createBtn').onclick=async()=>{const name=clean($('createName').value);if(!name){msg('createMsg','Server nomini kiriting.');return}const b=$('createBtn');b.disabled=true;b.textContent='Server yaratilmoqda…';try{const password=String(Math.floor(100000+Math.random()*900000));currentServer=name;currentPassword=password;await setupHost(name,password);$('madeName').textContent=name;$('madePass').textContent=password;msg('createMsg','Server tayyor.',true);$('serverModal').classList.remove('hide')}catch(e){msg('createMsg',e.message||'Server yaratilmadi.')}finally{b.disabled=false;b.textContent='Server yaratish'}};
-$('enterMade').onclick=async()=>{$('serverModal').classList.add('hide');try{if(!stream)stream=await getCamera();$('local').srcObject=stream;openCallUI(currentServer,currentPassword,true);status('Server faol',true);$('conn').textContent='● Ikkinchi odam kutilmoqda'}catch(e){msg('createMsg',e.message)}};
+$('createBtn').onclick=async()=>{const name=clean($('createName').value);if(!name){msg('createMsg','Server nomini kiriting.');return}const b=$('createBtn');setBusy(b,true,'Kamera va server tayyorlanmoqda…');try{const password=securePassword();currentServer=name;currentPassword=password;
+stream=await getCamera();$('local').srcObject=stream;
+await setupHost(name,password);$('madeName').textContent=name;$('madePass').textContent=password;
+msg('createMsg','Server tayyor.',true);$('serverModal').classList.remove('hide')}catch(e){msg('createMsg',e.message||'Server yaratilmadi.')}finally{setBusy(b,false,'Server yaratish')}};
+$('enterMade').onclick=()=>{$('serverModal').classList.add('hide');openCallUI(currentServer,currentPassword,true);status('Server faol',true);$('conn').textContent='● Ikkinchi odam kutilmoqda'};
 $('closeModal').onclick=()=>$('serverModal').classList.add('hide');
 $('copyData').onclick=async()=>{const txt=`WorldCall\nServer: ${currentServer}\nParol: ${currentPassword}\nSayt: ${location.href}`;try{await navigator.clipboard.writeText(txt);$('copyData').textContent='✓ Nusxalandi';setTimeout(()=>$('copyData').textContent='📋 Nom + parolni nusxalash',1500)}catch(e){prompt('Nusxalang:',txt)}};
-$('joinBtn').onclick=async()=>{const name=clean($('joinName').value),password=$('joinPass').value.trim();msg('joinMsg','');if(!name||!password){msg('joinMsg','Server nomi va parolini kiriting.');return}const b=$('joinBtn');b.disabled=true;b.textContent='Tekshirilmoqda…';try{stream=await getCamera();$('local').srcObject=stream;openCallUI(name,password,false);await setupGuest(name,password)}catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;msg('joinMsg',e.message||'Qo‘shilish amalga oshmadi.');$('homePage').style.display='block';$('callPage').classList.remove('show')}finally{b.disabled=false;b.textContent='Serverga qo‘shilish'}};
+$('joinBtn').onclick=async()=>{const name=clean($('joinName').value),password=$('joinPass').value.trim();msg('joinMsg','');if(!name||!password){msg('joinMsg','Server nomi va parolini kiriting.');return}
+if(!/^\d{6}$/.test(password)){msg('joinMsg','Parol aynan 6 xonali raqam bo‘lishi kerak.');return}
+const b=$('joinBtn');setBusy(b,true,'Kamera va server tekshirilmoqda…');try{stream=await getCamera();$('local').srcObject=stream;openCallUI(name,password,false);await setupGuest(name,password)}catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;msg('joinMsg',e.message||'Qo‘shilish amalga oshmadi.');$('homePage').style.display='block';$('callPage').classList.remove('show')}finally{setBusy(b,false,'Serverga qo‘shilish')}};
 $('mic').onclick=()=>{micOn=!micOn;stream?.getAudioTracks().forEach(t=>t.enabled=micOn);$('mic').textContent=micOn?'🎙️':'🔇';$('mic').classList.toggle('on',micOn)};
 $('cam').onclick=()=>{camOn=!camOn;stream?.getVideoTracks().forEach(t=>t.enabled=camOn);$('cam').textContent=camOn?'📷':'🚫';$('cam').classList.toggle('on',camOn)};
 $('screen').onclick=async()=>{if(!mediaCall)return;try{const ss=await navigator.mediaDevices.getDisplayMedia({video:true});const track=ss.getVideoTracks()[0];const sender=mediaCall.peerConnection?.getSenders()?.find(s=>s.track?.kind==='video');if(sender)await sender.replaceTrack(track);track.onended=()=>{const cam=stream?.getVideoTracks()[0];sender?.replaceTrack(cam)}}catch(e){}};
-function goHome(){stream?.getTracks().forEach(t=>t.stop());destroyCall();$('remote').srcObject=null;$('callPage').classList.remove('show');$('homePage').style.display='block';$('serverModal').classList.add('hide');$('conn').textContent='Suhbatdosh kutilmoqda…';$('wait').textContent='Suhbatdosh kutilmoqda…';status('Tayyor');location.hash=''}
+function goHome(){stopStream();destroyCall();$('remote').srcObject=null;$('callPage').classList.remove('show');$('homePage').style.display='block';$('serverModal').classList.add('hide');$('conn').textContent='Suhbatdosh kutilmoqda…';$('wait').textContent='Suhbatdosh kutilmoqda…';status('Tayyor');location.hash=''}
 $('end').onclick=goHome;$('home').onclick=goHome;$('copy').onclick=async()=>{const txt=`WorldCall\nServer: ${currentServer}\nParol: ${currentPassword}\n${location.href}`;try{await navigator.clipboard.writeText(txt);$('copy').textContent='✓ Nusxalandi';setTimeout(()=>$('copy').textContent='🔗 Server ma’lumotlari',1600)}catch(e){prompt('Nusxalang:',txt)}};
 document.addEventListener('click',()=>{const p=$('remote')?.play();if(p?.catch)p.catch(()=>{})},{passive:true});
+window.addEventListener('online',()=>status('Internet ulandi',true));
+window.addEventListener('offline',()=>status('Internet yo‘q'));
+window.addEventListener('pagehide',()=>{try{mediaCall?.close();peer?.destroy()}catch(e){}});
 status('GitHub Pages tayyor');
 </script>
 </body>
