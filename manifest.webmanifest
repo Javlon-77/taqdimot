@@ -1,0 +1,11 @@
+{
+  "name": "WorldCall — Secure Video Call",
+  "short_name": "WorldCall",
+  "description": "Ikki kishilik video qo‘ng‘iroq xonasi.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#060914",
+  "theme_color": "#060914",
+  "orientation": "portrait",
+  "icons": [{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
